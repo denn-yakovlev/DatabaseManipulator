@@ -1,0 +1,11 @@
+C:\Users\dench\source\repos\DatabaseManipulator\obj\Debug\netcoreapp2.1\DatabaseManipulator.csprojAssemblyReference.cache
+C:\Users\dench\source\repos\DatabaseManipulator\obj\Debug\netcoreapp2.1\DatabaseManipulator.csproj.CoreCompileInputs.cache
+C:\Users\dench\source\repos\DatabaseManipulator\obj\Debug\netcoreapp2.1\DatabaseManipulator.AssemblyInfoInputs.cache
+C:\Users\dench\source\repos\DatabaseManipulator\obj\Debug\netcoreapp2.1\DatabaseManipulator.AssemblyInfo.cs
+C:\Users\dench\source\repos\DatabaseManipulator\bin\Debug\netcoreapp2.1\DatabaseManipulator.deps.json
+C:\Users\dench\source\repos\DatabaseManipulator\bin\Debug\netcoreapp2.1\DatabaseManipulator.runtimeconfig.json
+C:\Users\dench\source\repos\DatabaseManipulator\bin\Debug\netcoreapp2.1\DatabaseManipulator.runtimeconfig.dev.json
+C:\Users\dench\source\repos\DatabaseManipulator\bin\Debug\netcoreapp2.1\DatabaseManipulator.dll
+C:\Users\dench\source\repos\DatabaseManipulator\bin\Debug\netcoreapp2.1\DatabaseManipulator.pdb
+C:\Users\dench\source\repos\DatabaseManipulator\obj\Debug\netcoreapp2.1\DatabaseManipulator.dll
+C:\Users\dench\source\repos\DatabaseManipulator\obj\Debug\netcoreapp2.1\DatabaseManipulator.pdb
