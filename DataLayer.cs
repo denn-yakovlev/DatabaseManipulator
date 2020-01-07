@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace DatabaseManipulator
 {
 
-    class Record
+    public class Record
     {
         /// <summary>
         /// Класс, представляющий одну запись из БД
@@ -51,7 +51,7 @@ namespace DatabaseManipulator
             return HashCode.Combine(Id, Datetime, Value);
         }
 
-        public static bool operator == (Record r1, Record r2)
+        public static bool operator ==(Record r1, Record r2)
         {
             return r1.Equals(r2);
         }
@@ -63,17 +63,17 @@ namespace DatabaseManipulator
 
     }
 
-    class Database
+    public class DataBase
     {
         public List<Record> Records { get; private set; }
-        public Database(List<Record> records)
+        public DataBase(List<Record> records)
         {
             Records = records;
         }
         public Record this[int id]
         {
             get
-            { 
+            {
                 foreach (Record rec in Records)
                 {
                     if (rec.Id == id)
@@ -94,17 +94,17 @@ namespace DatabaseManipulator
                         Records.Remove(rec);
                         Records.Add(value);
                     }
-                    
+
                 }
                 throw new ArgumentOutOfRangeException($"No such Id in Database: {id}");
             }
         }
     }
 
-
-    static class DbInteractor
+    public static class DatabaseInteractor
     {
-        public static Database Database { get; private set; }
+        
+        public static DataBase Database { get; private set; }
 
         public static void Open(string path)
         {
@@ -115,10 +115,12 @@ namespace DatabaseManipulator
             Database = ParseCsv(lines);
 
         }
-        static Database ParseCsv(string[] lines)
+        public static DataBase ParseCsv(string[] lines)
         {
+            var nfi = new System.Globalization.NumberFormatInfo();
+            nfi.NumberDecimalSeparator = ".";
 
-            string[] splittedLine = new string[3];
+            string[] splittedLine = new string[2];
             List<Record> records = new List<Record>();
             int id;
             DateTime dt;
@@ -129,10 +131,10 @@ namespace DatabaseManipulator
                 splittedLine = lines[i].Split(',');
                 id = int.Parse(splittedLine[0]);
                 dt = DateTime.Parse(splittedLine[1]);
-                val = double.Parse(splittedLine[2]);
+                val = double.Parse(splittedLine[2], nfi);
                 records.Add( new Record(id, dt, val) );
             }
-            return new Database(records);
+            return new DataBase(records);
         }
         public static Response Create(Request request)
         {
@@ -218,5 +220,27 @@ namespace DatabaseManipulator
         }
     }
 
-    
+    public static class IntSerializer
+    {
+        public static byte[] Serialize(this int i)
+        {
+            return BitConverter.GetBytes(i);
+        }
+    }
+
+    public static class DateTimeSerializer
+    {
+        public static byte[] Serialize(this DateTime dt)
+        {
+            return BitConverter.GetBytes(dt.ToBinary());
+        }
+    }
+
+    public static class DoubleSerializer
+    {
+        public static byte[] Serialize(this double d)
+        {
+            return BitConverter.GetBytes(d);
+        }
+    }
 }

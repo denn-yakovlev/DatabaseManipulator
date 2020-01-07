@@ -4,13 +4,12 @@ using System.Text;
 
 namespace DatabaseManipulator
 {
-    abstract class Dto
+    public abstract class Dto
     {
         public byte[] SerializedData { get; private set; }
-        public Dto()
-        {
-            SerializedData = null;
-        }
+
+        public Dto() { }
+
         public Dto(byte[] data)
         {
             SerializedData = data;
@@ -39,14 +38,14 @@ namespace DatabaseManipulator
         }
     }
 
-    enum ResponseCodes
+    public enum ResponseCodes
     {
         OK,
         NO_ID,
         EXISTS_ID
     }
 
-    class Response : Dto
+    public class Response : Dto
     {
         public ResponseCodes ResponseCode { get; private set; }
         public Response(ResponseCodes code) : this(code, null)
@@ -59,19 +58,34 @@ namespace DatabaseManipulator
         }
     }
 
-    enum RequestTypes
+    public enum RequestTypes
     {
         CREATE,
         READ,
         UPDATE,
         DELETE
     }
-    class Request: Dto
+    public class Request: Dto
     {
         public RequestTypes RequestType { get; private set; }
-        public Request(RequestTypes reqType, byte[] data): base(data)
+        
+        //public Request(RequestTypes reqType, byte[] data): base(data)
+        //{
+
+        //}
+        Request(RequestTypes reqType)
         {
             RequestType = reqType;
+        }
+        public Request(RequestTypes reqType, int id): this(reqType)
+        {
+            id.Serialize().CopyTo(SerializedData, 0);
+        }
+        public Request(RequestTypes reqType, int id, DateTime dt, double val):
+            this(reqType, id)
+        {
+            dt.Serialize().CopyTo(SerializedData, 4);
+            val.Serialize().CopyTo(SerializedData, 12);
         }
     }
 }
