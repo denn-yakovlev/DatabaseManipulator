@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DatabaseManipulator
 {
-    public abstract class Dto
+    abstract class Dto
     {
         public int Id { get; private set; }
         public DateTime Datetime { get; private set; }
@@ -25,14 +25,14 @@ namespace DatabaseManipulator
         }
     }
 
-    public enum ResponseCodes
+    enum ResponseCodes
     {
         OK,
         NO_ID,
         EXISTS_ID
     }
 
-    public class Response : Dto
+    class Response : Dto
     {
         public ResponseCodes ResponseCode { get; private set; }
         public Response(ResponseCodes respCode)
@@ -46,14 +46,14 @@ namespace DatabaseManipulator
         }
     }
 
-    public enum RequestTypes
+    enum RequestTypes
     {
         CREATE,
         READ,
         UPDATE,
         DELETE
     }
-    public class Request: Dto
+    class Request: Dto
     {
         public RequestTypes RequestType { get; private set; }
         public Request(RequestTypes reqType, int id): base(id)

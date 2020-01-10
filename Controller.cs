@@ -4,10 +4,39 @@ using System.Text;
 
 namespace DatabaseManipulator
 {
-    class Controller
+    static class Controller
     {
-        
-        public ResponseCodes SolveProblem(int entryNum, double[] valuesSeq, out DateTime result)
+        public static ResponseCodes CreateRecord(int id, DateTime dt, double val)
+        {
+            Request request = new Request(RequestTypes.CREATE, id, dt, val);
+            Response response =  DatabaseInteractor.HandleRequest(request);
+            return response.ResponseCode;
+        }
+
+        public static ResponseCodes ReadRecord(int id, out DateTime dt, out double val)
+        {
+            Request request = new Request(RequestTypes.READ, id);
+            Response response = DatabaseInteractor.HandleRequest(request);
+            dt = response.Datetime;
+            val = response.Value;
+            return response.ResponseCode;
+        }
+
+        public static ResponseCodes UpdateRecord(int id, DateTime dt, double val)
+        {
+            Request request = new Request(RequestTypes.UPDATE, id, dt, val);
+            Response response = DatabaseInteractor.HandleRequest(request);
+            return response.ResponseCode;
+        }
+
+        public static ResponseCodes DeleteRecord(int id)
+        {
+            Request request = new Request(RequestTypes.DELETE, id);
+            Response response = DatabaseInteractor.HandleRequest(request);
+            return response.ResponseCode;
+        }
+
+        public static ResponseCodes SolveProblem(int entryNum, double[] valuesSeq, out DateTime result)
         {
             /*
              Дана последовательность показаний некоего датчика во времени. 

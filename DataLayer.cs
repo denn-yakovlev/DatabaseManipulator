@@ -8,7 +8,7 @@ using System.Globalization;
 namespace DatabaseManipulator
 {
 
-    public class Record
+    class Record: IComparable<Record>
     {
         /// <summary>
         /// Класс, представляющий одну запись из БД
@@ -54,6 +54,11 @@ namespace DatabaseManipulator
             return HashCode.Combine(Id, Datetime, Value);
         }
 
+        public int CompareTo(Record other)
+        {
+            return Datetime.CompareTo(other.Datetime);
+        }
+
         public static bool operator ==(Record r1, Record r2)
         {
             return r1.Equals(r2);
@@ -65,7 +70,7 @@ namespace DatabaseManipulator
 
     }
 
-    public class DataBase: IEnumerable
+    class DataBase: IEnumerable
     {
         public List<Record> Records { get; private set; }
         public DataBase()
@@ -110,7 +115,7 @@ namespace DatabaseManipulator
         }
     }
 
-    public static class CsvSerializer
+    static class CsvSerializer
     {
         const string sep = ",";
         static NumberFormatInfo nfi = new NumberFormatInfo();
@@ -135,7 +140,7 @@ namespace DatabaseManipulator
         }
     }
 
-    public static class DatabaseInteractor
+    static class DatabaseInteractor
     {
         
         public static DataBase Database { get; private set; }

@@ -8,8 +8,7 @@ namespace DatabaseManipulator
     {
         static void Main(string[] args)
         {
-           
-            
+            UserLayer.Interpret();
         }
     }
 }
