@@ -6,35 +6,22 @@ namespace DatabaseManipulator
 {
     public abstract class Dto
     {
-        public byte[] SerializedData { get; private set; }
-
+        public int Id { get; private set; }
+        public DateTime Datetime { get; private set; }
+        public double Value { get; private set; }
         public Dto() { }
-
-        public Dto(byte[] data)
+        public Dto(int id)
         {
-            SerializedData = data;
+            Id = id;
         }
-
-        public new string ToString()
+        public Dto(int id, DateTime dt, double val): this(id)
         {
-            char[] chArray = new char[SerializedData.Length / 2];
-            for (int i = 0; i < chArray.Length; i++)
-            {
-                chArray[i] = BitConverter.ToChar(SerializedData, 2 * i);
-            }
-            return new string(chArray);
+            Datetime = dt;
+            Value = val;
         }
-        public Record ToRecord()
+        public static explicit operator Record(Dto dto)
         {
-            int id;
-            DateTime dt;
-            double val;
-
-            id = BitConverter.ToInt32(SerializedData, 0);
-            dt = DateTime.FromBinary(BitConverter.ToInt64(SerializedData, 4));
-            val = BitConverter.ToDouble(SerializedData, 12);
-
-            return new Record(id, dt, val);
+            return new Record(dto.Id, dto.Datetime, dto.Value);
         }
     }
 
@@ -48,13 +35,14 @@ namespace DatabaseManipulator
     public class Response : Dto
     {
         public ResponseCodes ResponseCode { get; private set; }
-        public Response(ResponseCodes code) : this(code, null)
+        public Response(ResponseCodes respCode)
         {
-
+            ResponseCode = respCode;
         }
-        public Response(ResponseCodes code, byte[] data) : base(data)
+        //shit code
+        public Response(ResponseCodes respCode, int id, DateTime dt, double val): base(id, dt, val)
         {
-            ResponseCode = code;
+            ResponseCode = respCode;
         }
     }
 
@@ -68,24 +56,15 @@ namespace DatabaseManipulator
     public class Request: Dto
     {
         public RequestTypes RequestType { get; private set; }
-        
-        //public Request(RequestTypes reqType, byte[] data): base(data)
-        //{
-
-        //}
-        Request(RequestTypes reqType)
+        public Request(RequestTypes reqType, int id): base(id)
         {
             RequestType = reqType;
         }
-        public Request(RequestTypes reqType, int id): this(reqType)
+        // also shit code
+        public Request(RequestTypes reqType, int id, DateTime dt, double val): base(id, dt, val)
         {
-            id.Serialize().CopyTo(SerializedData, 0);
+            RequestType = reqType;
         }
-        public Request(RequestTypes reqType, int id, DateTime dt, double val):
-            this(reqType, id)
-        {
-            dt.Serialize().CopyTo(SerializedData, 4);
-            val.Serialize().CopyTo(SerializedData, 12);
-        }
+        
     }
 }

@@ -1,6 +1,9 @@
 ﻿using System;
-using System.IO;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Globalization;
 
 namespace DatabaseManipulator
 {
@@ -14,7 +17,7 @@ namespace DatabaseManipulator
         public int Id { get; private set; }
         public DateTime Datetime { get; private set; }
         public double Value { get; private set; }
-
+   
         public Record(int id, DateTime dt, double val)
         {
             Id = id;
@@ -60,12 +63,15 @@ namespace DatabaseManipulator
             return !(r1 == r2);
         }
 
-
     }
 
-    public class DataBase
+    public class DataBase: IEnumerable
     {
         public List<Record> Records { get; private set; }
+        public DataBase()
+        {
+            Records = new List<Record>();
+        }
         public DataBase(List<Record> records)
         {
             Records = records;
@@ -86,18 +92,46 @@ namespace DatabaseManipulator
             }
             set
             {
-                foreach (Record rec in Records)
+                for (int i = 0; i < Records.Count; i++)
                 {
-                    if (rec.Id == id)
+                    if (Records[i].Id == id)
                     {
-                        // Shit code
-                        Records.Remove(rec);
-                        Records.Add(value);
+                        Records[i] = value;
+                        return;
                     }
-
                 }
                 throw new ArgumentOutOfRangeException($"No such Id in Database: {id}");
             }
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return Records.GetEnumerator();
+        }
+    }
+
+    public static class CsvSerializer
+    {
+        const string sep = ",";
+        static NumberFormatInfo nfi = new NumberFormatInfo();
+
+        static CsvSerializer()
+        {
+            nfi.NumberDecimalSeparator = ".";
+        }
+        public static byte[] Serialize(Record rec)
+        {
+            string ser = String.Format(nfi, "{0}{1}{2}{3}{4}", rec.Id, sep, rec.Datetime, sep, rec.Value);
+            return new UnicodeEncoding().GetBytes(ser);
+        }
+        public static Record DeserializeRecord(byte[] bytes)
+        {
+
+            string[] subs = new UnicodeEncoding().GetString(bytes).Split(sep);
+            int id = int.Parse(subs[0]);
+            DateTime dt = DateTime.Parse(subs[1]);
+            double val = double.Parse(subs[2], nfi);
+            return new Record(id, dt, val);
         }
     }
 
@@ -105,78 +139,118 @@ namespace DatabaseManipulator
     {
         
         public static DataBase Database { get; private set; }
-
+        private static FileStream DbFile { get; set; }
+        /// <summary>
+        /// Считывает базу данных из CSV-файла и сохраняет её как объект DataBase
+        /// </summary>
+        /// <param name="path">Путь до СSV-файла</param>
         public static void Open(string path)
         {
-            //FileStream db =  File.Open(path, FileMode.Open, FileAccess.ReadWrite);
-            //byte[] buf = new byte[db.Length];
-            //db.Read(buf);
-            string[] lines = File.ReadAllLines(path);
-            Database = ParseCsv(lines);
-
-        }
-        public static DataBase ParseCsv(string[] lines)
-        {
-            var nfi = new System.Globalization.NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
-
-            string[] splittedLine = new string[2];
-            List<Record> records = new List<Record>();
-            int id;
-            DateTime dt;
-            double val;
-
-            for (int i = 1; i < lines.Length; i++)
+            Database = new DataBase();
+            byte[] content;
+            UnicodeEncoding ue = new UnicodeEncoding();
+            foreach (string line in File.ReadLines(path))
             {
-                splittedLine = lines[i].Split(',');
-                id = int.Parse(splittedLine[0]);
-                dt = DateTime.Parse(splittedLine[1]);
-                val = double.Parse(splittedLine[2], nfi);
-                records.Add( new Record(id, dt, val) );
+                content = ue.GetBytes(line);
+                Record rec = CsvSerializer.DeserializeRecord(content);
+                Database.Records.Add(rec);
             }
-            return new DataBase(records);
+            DbFile = File.Open(path, FileMode.Open, FileAccess.ReadWrite); 
         }
-        public static Response Create(Request request)
+        
+        public static void Save()
+        {
+            byte[] content;
+            UnicodeEncoding ue = new UnicodeEncoding();
+            StreamWriter sw = new StreamWriter(DbFile);
+            foreach (Record rec in Database)
+            {
+                content = CsvSerializer.Serialize(rec);
+                sw.WriteLine(ue.GetString(content));
+            }
+            sw.Close();
+            DbFile.Close();   
+        }
+
+        static bool ExistsId(int id)
+        {
+            foreach (Record rec in Database)
+            {
+                if (rec.Id == id)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static Response HandleRequest(Request request)
+        {
+            RequestTypes reqType = request.RequestType;
+            int id = request.Id;
+            DateTime dt = request.Datetime;
+            double val = request.Value;
+            switch(reqType)
+            {
+                case RequestTypes.CREATE:
+                    {
+                        return Create(id, dt, val);
+                    }
+                case RequestTypes.READ:
+                    {
+                        return Read(id);
+                    }
+                case RequestTypes.UPDATE:
+                    {
+                        return Update(id, dt, val);
+                    }
+                case RequestTypes.DELETE:
+                    {
+                        return Delete(id);
+                    }
+                default:
+                    throw new Exception();
+            }
+        }
+
+        static Response Create(int id, DateTime dt, double val)
         {
             ResponseCodes respCode;
-            Record recToCreate = request.ToRecord();
-            if (Database.Records.Contains(recToCreate))
+            if (ExistsId(id))
             {
                 respCode = ResponseCodes.EXISTS_ID;
             }
             else
             {
+                Database.Records.Add(new Record(id, dt, val));
                 respCode = ResponseCodes.OK;
             }
             return new Response(respCode);
         }
-        public static Response Read(Request request)
+        static Response Read(int id)
         {
             ResponseCodes respCode;
-            byte[] respData = null;
-            int id = int.Parse(request.ToString());
+            DateTime dt = DateTime.MinValue;
+            double val = 0;
             try
             {
                 Record rec = Database[id];
                 respCode = ResponseCodes.OK;
-                respData = rec.Serialize();
+                dt = rec.Datetime;
+                val = rec.Value;
             }
             catch (ArgumentOutOfRangeException)
             {
                 respCode = ResponseCodes.NO_ID;
-                //string message = $"В базе данных нет записи с id == {id}";
-                //respData = message.Serialize();
             }
-            return new Response(respCode, respData);
+            return new Response(respCode, id, dt, val);
         }
-        public static Response Update(Request request)
+        static Response Update(int id, DateTime newDt, double newVal)
         {
             ResponseCodes respCode;
-            Record recToUpdate = request.ToRecord();
-            int id = recToUpdate.Id;
             try
             {
-                Database[id] = recToUpdate;
+                Database[id] = new Record(id, newDt, newVal);
                 respCode = ResponseCodes.OK;
             }
             catch (ArgumentOutOfRangeException)
@@ -185,13 +259,14 @@ namespace DatabaseManipulator
             }
             return new Response(respCode);
         }
-        public static Response Delete(Request request)
+        static Response Delete(int id)
         {
             ResponseCodes respCode;
-            int id = int.Parse(request.ToString());
             try
             {
-                Database.Records.RemoveAt(id);
+                Record rec = Database[id];
+                Database.Records.Remove(rec);
+                //Database.Records.Remove((Record)request);
                 respCode = ResponseCodes.OK;
             }
             catch(ArgumentOutOfRangeException)
@@ -202,45 +277,5 @@ namespace DatabaseManipulator
         }
     }
 
-    public static class StringSerializer
-    {
-        /// <summary>
-        /// Метод-расширитель для сериализации строки
-        /// </summary>
-        
-        public static byte[] Serialize(this string s)
-        {
-            char[] charsSplit = s.ToCharArray();
-            byte[] bytes = new byte[2 * charsSplit.Length];
-            for (int i = 0; i < charsSplit.Length; i++)
-            {
-                BitConverter.GetBytes(charsSplit[i]).CopyTo(bytes, 2 * i);
-            }
-            return bytes;
-        }
-    }
 
-    public static class IntSerializer
-    {
-        public static byte[] Serialize(this int i)
-        {
-            return BitConverter.GetBytes(i);
-        }
-    }
-
-    public static class DateTimeSerializer
-    {
-        public static byte[] Serialize(this DateTime dt)
-        {
-            return BitConverter.GetBytes(dt.ToBinary());
-        }
-    }
-
-    public static class DoubleSerializer
-    {
-        public static byte[] Serialize(this double d)
-        {
-            return BitConverter.GetBytes(d);
-        }
-    }
 }

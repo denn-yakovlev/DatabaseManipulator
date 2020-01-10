@@ -6,18 +6,16 @@ namespace DatabaseManipulator
 {
     class Controller
     {
-        public ResponseCodes CreateRecord(int id, DateTime dt, double val)
+        
+        public ResponseCodes SolveProblem(int entryNum, double[] valuesSeq, out DateTime result)
         {
-            Request req = new Request(RequestTypes.CREATE, id, dt, val);
-            Response resp = DatabaseInteractor.Create(req);
-            return resp.ResponseCode;
-        }
-        public ResponseCodes ReadRecord(int id, out Record result)
-        { 
-            Request req = new Request(RequestTypes.CREATE, id);
-            Response resp = DatabaseInteractor.Read(req);
-            result = resp.ToRecord();
-            return resp.ResponseCode;
+            /*
+             Дана последовательность показаний некоего датчика во времени. 
+            Отобразить на экране время начала n-ого вхождения заданной последовательности 
+            (искомая последовательность может быть длиной до 5 символов). 
+            В измерениях «вхождения» последовательности могут повторяться не один раз;
+            */
+            throw new NotImplementedException();
         }
     }
 }
