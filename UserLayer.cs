@@ -9,6 +9,7 @@ namespace DatabaseManipulator
     {
         static void PrintMenu()
         {
+            Console.WriteLine();
             Console.WriteLine(@"1. Добавить запись в БД
 2. Прочитать запись
 3. Обновить запись
@@ -18,30 +19,63 @@ namespace DatabaseManipulator
 0. Выход");
         }
 
+        static T ParseUntilOk<T>(string promptText = "", string FailureText = "") 
+            where T: struct
+        {
+           
+            T target = default(T);
+            IFormatProvider provider;
+            if (target is int)
+            {
+                provider = NumberFormatInfo.CurrentInfo;
+            }
+            else if (target is DateTime)
+            {
+                provider = DateTimeFormatInfo.CurrentInfo;
+            }
+            else if (target is double)
+            {
+                provider = new NumberFormatInfo() { NumberDecimalSeparator = "." };
+            }
+            else
+            {
+                throw new Exception(@"T должно быть double/DateTime/int");
+            }
+            string line;
+            Console.WriteLine(promptText);
+            while (true)
+            {
+                line = Console.ReadLine();
+                try
+                {
+                    target = (T)((IConvertible)line).ToType(typeof(T), provider);
+                    return target;
+                }
+                catch(FormatException)
+                {
+                    Console.WriteLine(FailureText);
+                    Console.WriteLine();
+                }          
+                
+            }
+            
+        }
+
         public static void Interpret()
         {
-            PrintMenu();
-            Console.Write('>');
+          
             int choice;
-            bool isParseOk;
             do
             {
-                isParseOk = int.TryParse(Console.ReadLine(), out choice);
-                if (!isParseOk)
-                {
-                    Console.WriteLine("Введите целое число!");
-                    Console.WriteLine();
-                }
-            } while (!isParseOk);
-            while (choice != 0)
-            {
-                if (choice < 1 || choice > 6)
+                PrintMenu();
+                choice = ParseUntilOk<int>(FailureText: "Введите целое число!");
+                if (choice < 0 || choice > 6)
                 {
                     Console.WriteLine("Некорректный выбор, введите снова");
                     continue;
                 }
                 SwitchOption(choice);
-            }
+            } while (choice != 0);
         }
 
         static void SwitchOption(int choice)
@@ -60,38 +94,19 @@ namespace DatabaseManipulator
         static void CreateRecord()
         {
             Console.WriteLine();
-            Console.WriteLine("Введите ID для записи (целое число)");
-            // wtf??
-            string line = Console.ReadLine();
-            int id = int.Parse(line);
-            Console.WriteLine("Введите дату и время (дд.ММ.гггг чч:мм:сс)");
-            bool isParseOk;
-            DateTime dt;
-            do
-            {
-                line = Console.ReadLine();
-                isParseOk = DateTime.TryParse(line, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.None, out dt);
-                if (!isParseOk)
-                {
-                    Console.WriteLine("Неверный ввод, попробуйте ещё раз");
-                }
-            }
-            while (!isParseOk);
-
-            var nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
-            double val;
-            Console.WriteLine("Введите значение (дробное число)");
-            do
-            {
-                line = Console.ReadLine();
-                isParseOk = double.TryParse(line, NumberStyles.AllowDecimalPoint, nfi, out val);
-                if (!isParseOk)
-                {
-                    Console.WriteLine("Неверный ввод, попробуйте ещё раз");
-                }
-            }
-            while (!isParseOk);
+            int id = ParseUntilOk<int>(
+                "Введите ID для записи (целое число)", 
+                "Неверный ввод, попробуйте ещё раз"
+                );
+            DateTime dt = ParseUntilOk<DateTime>(
+                "Введите дату и время (дд.ММ.гггг чч:мм:сс)", 
+                "Неверный ввод, попробуйте ещё раз"
+                );
+            double val = ParseUntilOk<double>(
+                "Введите значение (дробное число, десятич. разделитель - точка)", 
+                "Неверный ввод, попробуйте ещё раз"
+                );
+            
             ResponseCodes respCode = Controller.CreateRecord(id, dt, val);
             if (respCode == ResponseCodes.OK)
             {
@@ -101,16 +116,15 @@ namespace DatabaseManipulator
             {
                 Console.WriteLine("Id уже существует");
             }
-
-
         }
+
         static void ReadRecord()
         {
-            Console.WriteLine();
-            Console.WriteLine("Введите ID для записи (целое число)");
-            // wtf??
-            string line = Console.ReadLine();
-            int id = int.Parse(line);
+            Console.WriteLine(); 
+            int id = ParseUntilOk<int>(
+                "Введите ID для записи (целое число)",
+                "Неверный ввод, попробуйте ещё раз"
+                );
             DateTime dt;
             double val;
             ResponseCodes respCode = Controller.ReadRecord(id, out dt, out val);
@@ -125,39 +139,19 @@ namespace DatabaseManipulator
         }
         static void UpdateRecord()
         {
-            Console.WriteLine();
-            Console.WriteLine("Введите ID для записи (целое число)");
-            // wtf??
-            string line = Console.ReadLine();
-            int id = int.Parse(line);
-            Console.WriteLine("Введите новые дату и время (дд.ММ.гггг чч:мм:сс)");
-            bool isParseOk;
-            DateTime dt;
-
-            do
-            {
-                line = Console.ReadLine();
-                isParseOk = DateTime.TryParse(line, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.None, out dt);
-                if (!isParseOk)
-                {
-                    Console.WriteLine("Неверный ввод, попробуйте ещё раз");
-                }
-            } while (!isParseOk);
-
-            var nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
-            double val;
-            Console.WriteLine("Введите новое значение (дробное число)");
-            do
-            {
-                line = Console.ReadLine();
-                isParseOk = double.TryParse(line, NumberStyles.AllowDecimalPoint, nfi, out val);
-                if (!isParseOk)
-                {
-                    Console.WriteLine("Неверный ввод, попробуйте ещё раз");
-                }
-            }
-            while (!isParseOk);
+            Console.WriteLine();   
+            int id = ParseUntilOk<int>(
+                "Введите ID для записи (целое число)",
+                "Неверный ввод, попробуйте ещё раз"
+                );
+            DateTime dt = ParseUntilOk<DateTime>(
+                "Введите дату и время (дд.ММ.гггг чч:мм:сс)",
+                "Неверный ввод, попробуйте ещё раз"
+                );
+            double val = ParseUntilOk<double>(
+                "Введите значение (дробное число, десятич. разделитель - точка)",
+                "Неверный ввод, попробуйте ещё раз"
+                );
             ResponseCodes respCode = Controller.UpdateRecord(id, dt, val);
             if (respCode == ResponseCodes.OK)
             {
@@ -171,9 +165,10 @@ namespace DatabaseManipulator
         static void DeleteRecord()
         {
             Console.WriteLine();
-            Console.WriteLine("Введите ID для записи (целое число)");
-            string line = Console.ReadLine();
-            int id = int.Parse(line);
+            int id = ParseUntilOk<int>(
+                "Введите ID для записи (целое число)",
+                "Неверный ввод, попробуйте ещё раз"
+                );
             ResponseCodes respCode = Controller.DeleteRecord(id);
             if (respCode == ResponseCodes.OK)
             {
@@ -187,50 +182,65 @@ namespace DatabaseManipulator
         static void ReadAll()
         {
             var records = Controller.ReadAll();
+            Console.WriteLine();
             foreach (var rec in records)
             {
                 Console.WriteLine($"{rec.Id}   {rec.Datetime}   {rec.Value}");
             }
+            Console.WriteLine();
         }
+
         static void SolveProblem()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
             string problemText = @"Дана последовательность показаний некоего датчика во времени. 
 Отобразить на экране время начала n-ого вхождения заданной последовательности 
 искомая последовательность может быть длиной до 5 символов). 
 В измерениях «вхождения» последовательности могут повторяться не один раз;
 ";
-            Console.WriteLine(problemText);
-            Console.WriteLine("Введите номер вхождения (целое число)");
-            string line = Console.ReadLine();
-            int entryNum = int.Parse(line);
-            Console.WriteLine("Введите последовательность значений через пробел(дробное число)");
-            line = Console.ReadLine();
-            string[] split = line.Split(" ");
-            double d;
-            var nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
+            Console.WriteLine(problemText);    
+            int entryNum = ParseUntilOk<int>(
+                "Введите номер вхождения (целое число)",
+                "Неверный ввод, попробуйте ещё раз"
+                );
+            string line;
+            Console.WriteLine("Введите последовательность значений через пробел(дробное число, десятич. разделитель - точка)");
+            double val;
+            bool isParseOk = false;
+            var nfi = new NumberFormatInfo() { NumberDecimalSeparator = "." };
             List<double> valuesSeq = new List<double>();
-            foreach (string s in split)
+            while (true)
             {
-                bool isParseOk = double.TryParse(s, NumberStyles.AllowDecimalPoint, nfi, out d);
-                if (!isParseOk)
+                line = Console.ReadLine();
+                string[] split = line.Split(" ");
+                foreach (string s in split)
                 {
-                    Console.WriteLine("Неверный ввод, попробуйте ещё раз");
+                    isParseOk = double.TryParse(s, NumberStyles.Number, nfi, out val);
+                    if (!isParseOk)
+                    {
+                        Console.WriteLine("Неверный ввод, попробуйте ещё раз");
+                        break;
+                    }
+                    else
+                    {
+                        valuesSeq.Add(val);
+                    }
                 }
-                else
+                if (isParseOk)
                 {
-                    valuesSeq.Add(d);
+                    break;
                 }
-            }
-            DateTime dt = Controller.SolveProblem(entryNum, valuesSeq.ToArray());
-            if (dt == DateTime.MinValue)
+            }  
+            try
             {
-                Console.WriteLine("Не найдено!");
+                DateTime dt = Controller.SolveProblem(entryNum, valuesSeq);
+                Console.WriteLine();
+                Console.WriteLine("OK");
+                Console.WriteLine(dt);
             }
-            else
+            catch(Exception exc)
             {
-                Console.WriteLine($"OK: {dt}");
+                Console.WriteLine(exc.Message);
             }
         }
     }

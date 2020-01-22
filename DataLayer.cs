@@ -8,11 +8,8 @@ using System.Globalization;
 namespace DatabaseManipulator
 {
 
-    class Record: IComparable<Record>
+    class Record
     {
-        /// <summary>
-        /// Класс, представляющий одну запись из БД
-        /// </summary>
 
         public int Id { get; private set; }
         public DateTime Datetime { get; private set; }
@@ -24,11 +21,6 @@ namespace DatabaseManipulator
             Datetime = dt;
             Value = val;
         }
-
-        /// <summary>
-        /// Cериализует запись из БД
-        /// </summary>
-        /// <returns></returns>
         public byte[] Serialize()
         {
             byte[] bytes = new byte[20];
@@ -52,11 +44,6 @@ namespace DatabaseManipulator
         public override int GetHashCode()
         {
             return HashCode.Combine(Id, Datetime, Value);
-        }
-
-        public int CompareTo(Record other)
-        {
-            return Datetime.CompareTo(other.Datetime);
         }
 
         public static bool operator ==(Record r1, Record r2)
@@ -118,21 +105,17 @@ namespace DatabaseManipulator
     static class CsvSerializer
     {
         const string sep = ",";
-        static NumberFormatInfo nfi = new NumberFormatInfo();
-
-        static CsvSerializer()
-        {
-            nfi.NumberDecimalSeparator = ".";
-        }
+        static NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = "." };
+ 
         public static byte[] Serialize(Record rec)
         {
-            string ser = String.Format(nfi, "{0}{1}{2}{3}{4}", rec.Id, sep, rec.Datetime, sep, rec.Value);
-            return new UnicodeEncoding().GetBytes(ser);
+            string ser = string.Format(nfi, "{0}{1}{2}{3}{4}", rec.Id, sep, rec.Datetime, sep, rec.Value);
+            return new UTF8Encoding().GetBytes(ser);
         }
         public static Record DeserializeRecord(byte[] bytes)
         {
 
-            string[] subs = new UnicodeEncoding().GetString(bytes).Split(sep);
+            string[] subs = new UTF8Encoding().GetString(bytes).Split(sep);
             int id = int.Parse(subs[0]);
             DateTime dt = DateTime.Parse(subs[1]);
             double val = double.Parse(subs[2], nfi);
@@ -144,7 +127,7 @@ namespace DatabaseManipulator
     {
         
         public static DataBase Database { get; private set; }
-        private static FileStream DbFile { get; set; }
+        static FileStream DbFile { get; set; }
         /// <summary>
         /// Считывает базу данных из CSV-файла и сохраняет её как объект DataBase
         /// </summary>
@@ -153,7 +136,7 @@ namespace DatabaseManipulator
         {
             Database = new DataBase();
             byte[] content;
-            UnicodeEncoding ue = new UnicodeEncoding();
+            UTF8Encoding ue = new UTF8Encoding();
             foreach (string line in File.ReadLines(path))
             {
                 content = ue.GetBytes(line);
@@ -166,14 +149,18 @@ namespace DatabaseManipulator
         public static void Save()
         {
             byte[] content;
-            UnicodeEncoding ue = new UnicodeEncoding();
-            StreamWriter sw = new StreamWriter(DbFile);
+            UTF8Encoding ue = new UTF8Encoding();
+            
+            //очищает содежимое файла
+            DbFile.SetLength(0);
+            DbFile.Flush();
+
             foreach (Record rec in Database)
             {
                 content = CsvSerializer.Serialize(rec);
-                sw.WriteLine(ue.GetString(content));
-            }
-            sw.Close();
+                DbFile.Write(content);
+                DbFile.Write(ue.GetBytes(Environment.NewLine));
+            }  
             DbFile.Close();   
         }
 
@@ -271,7 +258,6 @@ namespace DatabaseManipulator
             {
                 Record rec = Database[id];
                 Database.Records.Remove(rec);
-                //Database.Records.Remove((Record)request);
                 respCode = ResponseCodes.OK;
             }
             catch(ArgumentOutOfRangeException)

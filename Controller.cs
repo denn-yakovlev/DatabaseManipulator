@@ -42,9 +42,8 @@ namespace DatabaseManipulator
         }
 
 
-        // wrong
 
-        public static DateTime SolveProblem(int entryNum, double[] valuesSeq)
+        public static DateTime SolveProblem(int entryNum, IList<double> valuesSeq)
         {
             /*
                    Дана последовательность показаний некоего датчика во времени. 
@@ -52,24 +51,24 @@ namespace DatabaseManipulator
                   (искомая последовательность может быть длиной до 5 символов). 
                   В измерениях «вхождения» последовательности могут повторяться не один раз;
             */
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
             List<Record> records = ReadAll();
             DateTime dt = DateTime.MinValue;
             int currEntry = 0;
-            for (int i = 0; i < records.Count - valuesSeq.Length; i++)
+            for (int i = 0; i <= records.Count - valuesSeq.Count; i++)
             {
                 if (records[i].Value == valuesSeq[0])
                 {
                     dt = records[i].Datetime;
                     int j;
-                    for (j = 0; j < valuesSeq.Length; i++)
+                    for (j = 0; j < valuesSeq.Count; j++)
                     {
                         if (records[i + j].Value != valuesSeq[j])
                         {
                             break;
                         }
                     }
-                    if (j == valuesSeq.Length)
+                    if (j == valuesSeq.Count)
                     {
                         currEntry++;
                     }
@@ -79,7 +78,7 @@ namespace DatabaseManipulator
                     }
                 }
             }
-            return dt;
+            throw new Exception("Не найдено!");
         }
     }
 }

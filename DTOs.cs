@@ -39,7 +39,6 @@ namespace DatabaseManipulator
         {
             ResponseCode = respCode;
         }
-        //shit code
         public Response(ResponseCodes respCode, int id, DateTime dt, double val): base(id, dt, val)
         {
             ResponseCode = respCode;
@@ -60,7 +59,6 @@ namespace DatabaseManipulator
         {
             RequestType = reqType;
         }
-        // also shit code
         public Request(RequestTypes reqType, int id, DateTime dt, double val): base(id, dt, val)
         {
             RequestType = reqType;

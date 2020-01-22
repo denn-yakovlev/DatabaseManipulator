@@ -4,11 +4,25 @@ using System.Collections.Generic;
 using System.Globalization;
 namespace DatabaseManipulator
 {
+    
     class Program
     {
         static void Main(string[] args)
         {
-            UserLayer.Interpret();
+            try
+            {
+                DatabaseInteractor.Open("../../../input.csv");
+                UserLayer.Interpret();
+            }
+            catch (Exception exc)
+            {
+                Console.WriteLine($"Ошибка: {exc.Message}");
+            }
+            finally
+            {
+                DatabaseInteractor.Save();
+            }
+            
         }
     }
 }
