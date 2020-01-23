@@ -41,8 +41,6 @@ namespace DatabaseManipulator
             return DatabaseInteractor.Database.Records;
         }
 
-
-
         public static DateTime SolveProblem(int entryNum, IList<double> valuesSeq)
         {
             /*
@@ -53,6 +51,7 @@ namespace DatabaseManipulator
             */
             //throw new NotImplementedException();
             List<Record> records = ReadAll();
+            DatabaseInteractor.Database.Sort(Record.ComparisonBy.DATETIME);
             DateTime dt = DateTime.MinValue;
             int currEntry = 0;
             for (int i = 0; i <= records.Count - valuesSeq.Count; i++)
@@ -79,6 +78,11 @@ namespace DatabaseManipulator
                 }
             }
             throw new Exception("Не найдено!");
+        }
+
+        public static void SortDatabase(int by)
+        {
+            DatabaseInteractor.Database.Sort((Record.ComparisonBy)by);
         }
     }
 }

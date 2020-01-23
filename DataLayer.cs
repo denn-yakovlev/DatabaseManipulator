@@ -21,14 +21,6 @@ namespace DatabaseManipulator
             Datetime = dt;
             Value = val;
         }
-        public byte[] Serialize()
-        {
-            byte[] bytes = new byte[20];
-            BitConverter.GetBytes(Id).CopyTo(bytes, 0);
-            BitConverter.GetBytes(Datetime.ToBinary()).CopyTo(bytes, 4);
-            BitConverter.GetBytes(Value).CopyTo(bytes, 12);
-            return bytes;
-        }
 
         public override bool Equals(object obj)
         {
@@ -41,6 +33,7 @@ namespace DatabaseManipulator
             }
             return false;
         }
+
         public override int GetHashCode()
         {
             return HashCode.Combine(Id, Datetime, Value);
@@ -53,6 +46,34 @@ namespace DatabaseManipulator
         public static bool operator !=(Record r1, Record r2)
         {
             return !(r1 == r2);
+        }
+
+        public enum ComparisonBy
+        {
+            ID = 1,
+            DATETIME,
+            VALUE
+        }
+
+        public class Comparer : IComparer<Record>
+        {
+            public ComparisonBy By { get; private set; }
+
+            public Comparer(ComparisonBy by)
+            {
+                By = by;
+            }
+
+            public int Compare(Record x, Record y)
+            {
+                switch (By)
+                {
+                    case ComparisonBy.ID: return x.Id.CompareTo(y.Id);
+                    case ComparisonBy.DATETIME: return x.Datetime.CompareTo(y.Datetime);
+                    case ComparisonBy.VALUE: return x.Value.CompareTo(y.Value);
+                    default: throw new Exception();
+                }
+            }
         }
 
     }
@@ -95,10 +116,15 @@ namespace DatabaseManipulator
                 throw new ArgumentOutOfRangeException($"No such Id in Database: {id}");
             }
         }
-
+        
         public IEnumerator GetEnumerator()
         {
             return Records.GetEnumerator();
+        }
+
+        public void Sort(Record.ComparisonBy by)
+        {
+            Records.Sort(new Record.Comparer(by));
         }
     }
 
@@ -112,7 +138,7 @@ namespace DatabaseManipulator
             string ser = string.Format(nfi, "{0}{1}{2}{3}{4}", rec.Id, sep, rec.Datetime, sep, rec.Value);
             return new UTF8Encoding().GetBytes(ser);
         }
-        public static Record DeserializeRecord(byte[] bytes)
+        public static Record Deserialize(byte[] bytes)
         {
 
             string[] subs = new UTF8Encoding().GetString(bytes).Split(sep);
@@ -140,7 +166,7 @@ namespace DatabaseManipulator
             foreach (string line in File.ReadLines(path))
             {
                 content = ue.GetBytes(line);
-                Record rec = CsvSerializer.DeserializeRecord(content);
+                Record rec = CsvSerializer.Deserialize(content);
                 Database.Records.Add(rec);
             }
             DbFile = File.Open(path, FileMode.Open, FileAccess.ReadWrite); 
@@ -215,6 +241,7 @@ namespace DatabaseManipulator
             else
             {
                 Database.Records.Add(new Record(id, dt, val));
+                Database.Sort(Record.ComparisonBy.DATETIME);
                 respCode = ResponseCodes.OK;
             }
             return new Response(respCode);
@@ -243,6 +270,7 @@ namespace DatabaseManipulator
             try
             {
                 Database[id] = new Record(id, newDt, newVal);
+                Database.Sort(Record.ComparisonBy.DATETIME);
                 respCode = ResponseCodes.OK;
             }
             catch (ArgumentOutOfRangeException)
@@ -258,6 +286,7 @@ namespace DatabaseManipulator
             {
                 Record rec = Database[id];
                 Database.Records.Remove(rec);
+                Database.Sort(Record.ComparisonBy.DATETIME);
                 respCode = ResponseCodes.OK;
             }
             catch(ArgumentOutOfRangeException)

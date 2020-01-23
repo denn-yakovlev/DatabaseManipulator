@@ -9,17 +9,18 @@ namespace DatabaseManipulator
     {
         static void PrintMenu()
         {
-            Console.WriteLine();
-            Console.WriteLine(@"1. Добавить запись в БД
+            Console.WriteLine(@"
+1. Добавить запись в БД
 2. Прочитать запись
 3. Обновить запись
 4. Удалить запись
 5. Прочитать все записи
 6. Решить задачу
+7. Отсортировать БД
 0. Выход");
         }
 
-        static T ParseUntilOk<T>(string promptText = "", string FailureText = "") 
+        static T ParseUntilOk<T>(string promptText = "", string failureText = "") 
             where T: struct
         {
            
@@ -53,7 +54,7 @@ namespace DatabaseManipulator
                 }
                 catch(FormatException)
                 {
-                    Console.WriteLine(FailureText);
+                    Console.WriteLine(failureText);
                     Console.WriteLine();
                 }          
                 
@@ -68,8 +69,8 @@ namespace DatabaseManipulator
             do
             {
                 PrintMenu();
-                choice = ParseUntilOk<int>(FailureText: "Введите целое число!");
-                if (choice < 0 || choice > 6)
+                choice = ParseUntilOk<int>(failureText: "Введите целое число!");
+                if (choice < 0 || choice > 7)
                 {
                     Console.WriteLine("Некорректный выбор, введите снова");
                     continue;
@@ -88,6 +89,7 @@ namespace DatabaseManipulator
                 case 4: { DeleteRecord(); break; }
                 case 5: { ReadAll(); break; }
                 case 6: { SolveProblem(); break; }
+                case 7: { SortDatabase(); break; }
             }
         }
 
@@ -242,6 +244,29 @@ namespace DatabaseManipulator
             {
                 Console.WriteLine(exc.Message);
             }
+        }
+
+        static void SortDatabase()
+        {
+            Console.WriteLine(@"
+1. По ИД
+2. По Дате/времени
+3. По значению
+0. Отмена");
+            int choice;
+            do
+            {
+                choice = ParseUntilOk<int>("", "Неверный ввод");
+                if (choice < 0 || choice > 3)
+                {
+                    Console.WriteLine("Некорректный выбор, введите снова");
+                }
+                else break;
+            } while (choice != 0);
+            Controller.SortDatabase(by: choice);
+            Console.WriteLine("OK");
+            ReadAll();
+            Console.WriteLine();
         }
     }
 }
